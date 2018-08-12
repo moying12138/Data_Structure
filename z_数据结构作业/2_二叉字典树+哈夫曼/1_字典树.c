@@ -12,7 +12,7 @@
 
 typedef struct Node {
     int flag;
-    char *str;
+    unsigned char *str;
     struct Node *next[SIZE];
 }Node;
 int node_cnt = 0;
@@ -32,20 +32,20 @@ void clear(Node *root) {
     free(root);
     return ;
 }
-int word_cnt = 0;
-Node *insert(Node *root, char *str) {
+int insert_length = 0, insert_cnt = 0;
+Node *insert(Node *root, unsigned char *str) {
     int cnt = 0;
     if(!root) root = get_node();
     Node *p = root;
+    insert_length += strlen(str);
     for(int i = 0; str[i]; ++i) {
-        if(str[i] > 0) continue;
-        cnt++;
-        if(!p->next[str[i] * -1]) p->next[str[i] * -1] = get_node();
-        p = p->next[str[i] * -1];
+        if(!p->next[str[i]]) p->next[str[i]] = get_node();
+        p = p->next[str[i]];
     }
     p->str = strdup(str);
+    if(!p->flag) insert_cnt++;
     p->flag = 1;
-    word_cnt += cnt / 3;
+    
     return root;
 }
 
@@ -63,23 +63,32 @@ int search(Node *root, char *str) {
     return 0;
 }
 
+int search_cnt = 0, search_length = 0;
 void output(Node *root) {
     if(!root) return ;
-    if(root->flag) printf("find string : %s\n", root->str);
+    if(root->flag) {
+        search_cnt++;
+        printf("find string : %s\n", root->str);
+    }
     for(int i = 0; i < SIZE; ++i) {
         if(!root->next[i]) continue;
+        search_length++;
         output(root->next[i]);
     }
 }
 
 int main() {
-    char str[100000];
+    unsigned char str[100000];
     Node *root = NULL;
-    while(~scanf("%s", str)) {
+    FILE *fp = fopen("./input_str", "r");
+    while(fgets(str, 10000, fp)) {
+        str[strlen(str) - 1] = '\0';
         root = insert(root, str);
     }
     output(root);
-    printf("storagr rate : %lf\n", 1.0 * word_cnt / (1.0 * node_cnt * sizeof(Node)));
+
+    printf("查找字符串个数 : %d\n总查找长度 : %d\n平均查找长度 : %lf\n", search_cnt, search_length, 1.0 * (search_length / search_cnt));
+    printf("storagr rate : %lf\n", 1.0 * insert_length / (1.0 * node_cnt * (sizeof(Node) - sizeof(char *))));
     clear(root);
 
     
